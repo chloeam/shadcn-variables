@@ -1,7 +1,7 @@
 {
   "name": "shadcn-variables",
   "version": "1.0.0",
-  "description": "Your Figma Plugin",
+  "description": "Export Figma variables to shadcn-compatible CSS with hex-to-oklch conversion",
   "main": "code.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",

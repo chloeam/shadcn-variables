@@ -1,17 +1,283 @@
-<h2>Rectangle Creator</h2>
-<p>Count: <input id="count" type="number" value="5"></p>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
-<script>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 360px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1a1a1a;
+    }
+    
+    .description {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+    
+    .export-btn {
+      width: 100%;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: background-color 0.2s;
+    }
+    
+    .export-btn:hover {
+      background: #0052a3;
+    }
+    
+    .export-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .status {
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    
+    .status.success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    
+    .status.error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    
+    .status.loading {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+    
+    .preview {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 11px;
+      max-height: 150px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .download-btn {
+      width: 100%;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 8px;
+      display: none;
+    }
+    
+    .download-btn:hover {
+      background: #218838;
+    }
+    
+    .close-btn {
+      width: 100%;
+      background: transparent;
+      color: #666;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    
+    .close-btn:hover {
+      background: #f5f5f5;
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0;
+    }
+    
+    .feature-list li {
+      padding: 4px 0;
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .feature-list li::before {
+      content: "✓";
+      color: #28a745;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Export Semantic Variables</h1>
+    <p class="description">
+      Export variables from your "Mode" collection to shadcn-compatible CSS with automatic hex-to-oklch conversion.
+    </p>
+    
+    <ul class="feature-list">
+      <li>Auto-detects collection with "Mode" in name</li>
+      <li>Resolves variable aliases automatically</li>
+      <li>Converts hex values to oklch format</li>
+      <li>Generates clean shadcn CSS structure</li>
+    </ul>
+    
+    <button id="exportBtn" class="export-btn">
+      Export Semantic Variables
+    </button>
+    
+    <div id="status" class="status"></div>
+    
+    <div id="preview" class="preview"></div>
+    
+    <button id="downloadBtn" class="download-btn">
+      Download CSS File
+    </button>
+    
+    <button id="closeBtn" class="close-btn">
+      Close Plugin
+    </button>
+  </div>
 
-document.getElementById('create').onclick = () => {
-  const textbox = document.getElementById('count');
-  const count = parseInt(textbox.value, 10);
-  parent.postMessage({ pluginMessage: { type: 'create-shapes', count } }, '*')
-}
-
-document.getElementById('cancel').onclick = () => {
-  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
-
-</script>
+  <script>
+    let generatedCSS = '';
+    
+    // DOM elements
+    const exportBtn = document.getElementById('exportBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const status = document.getElementById('status');
+    const preview = document.getElementById('preview');
+    
+    // Show status message
+    function showStatus(message, type = 'loading') {
+      status.textContent = message;
+      status.className = `status ${type}`;
+      status.style.display = 'block';
+    }
+    
+    // Hide status
+    function hideStatus() {
+      status.style.display = 'none';
+    }
+    
+    // Show preview of generated CSS
+    function showPreview(css) {
+      const truncated = css.length > 500 ? css.substring(0, 500) + '...' : css;
+      preview.textContent = truncated;
+      preview.style.display = 'block';
+    }
+    
+    // Download CSS file
+    function downloadCSS(css) {
+      const blob = new Blob([css], { type: 'text/css' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'variables.css';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    // Event listeners
+    exportBtn.addEventListener('click', () => {
+      exportBtn.disabled = true;
+      exportBtn.innerHTML = '<span class="loading-spinner"></span>Exporting...';
+      showStatus('Reading Figma variables...', 'loading');
+      
+      // Send message to plugin code to start export
+      parent.postMessage({ pluginMessage: { type: 'start-export' } }, '*');
+    });
+    
+    downloadBtn.addEventListener('click', () => {
+      if (generatedCSS) {
+        downloadCSS(generatedCSS);
+        showStatus('CSS file downloaded successfully!', 'success');
+      }
+    });
+    
+    closeBtn.addEventListener('click', () => {
+      parent.postMessage({ pluginMessage: { type: 'close' } }, '*');
+    });
+    
+    // Listen for messages from plugin code
+    window.addEventListener('message', (event) => {
+      const { type, css, variableCount, collectionName, message } = event.data.pluginMessage || {};
+      
+      if (type === 'export-complete') {
+        generatedCSS = css;
+        exportBtn.disabled = false;
+        exportBtn.textContent = 'Export Semantic Variables';
+        
+        showStatus(`Successfully exported ${variableCount} variables from "${collectionName}"!`, 'success');
+        showPreview(css);
+        downloadBtn.style.display = 'block';
+        
+        // Auto-download after 1 second
+        setTimeout(() => {
+          downloadCSS(css);
+        }, 1000);
+        
+      } else if (type === 'error') {
+        exportBtn.disabled = false;
+        exportBtn.textContent = 'Export Semantic Variables';
+        showStatus(`Error: ${message}`, 'error');
+      }
+    });
+  </script>
+</body>
+</html>
