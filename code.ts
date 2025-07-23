@@ -349,7 +349,7 @@ async function main() {
 }
 
 // This shows the HTML page in "ui.html".
-figma.showUI(__html__, { width: 400, height: 600 });
+figma.showUI(__html__, { themeColors: true, width: 400, height: 600 });
 
 // Calls to "parent.postMessage" from within the HTML page will trigger this
 // callback. The callback will be passed the "pluginMessage" property of the

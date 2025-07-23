@@ -7,8 +7,8 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       margin: 0;
       padding: 20px;
-      background: #f9f9f9;
-      color: #333;
+      background: var(--figma-color-bg);
+      color: var(--figma-color-text);
     }
     
     .container {
@@ -20,20 +20,18 @@
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 8px;
-      color: #1a1a1a;
     }
     
     .description {
       font-size: 13px;
-      color: #666;
       margin-bottom: 24px;
       line-height: 1.4;
     }
     
     .export-btn {
       width: 100%;
-      background: #0066cc;
-      color: white;
+      background: var(--figma-color-bg-brand);
+      color: var(--figma-color-text-onbrand);
       border: none;
       border-radius: 6px;
       padding: 12px 16px;
@@ -45,11 +43,11 @@
     }
     
     .export-btn:hover {
-      background: #0052a3;
+      background: var(--figma-color-bg-brand-hover);
     }
     
     .export-btn:disabled {
-      background: #ccc;
+      background: var(--figma-color-bg-disabled);
       cursor: not-allowed;
     }
     
@@ -62,26 +60,20 @@
     }
     
     .status.success {
-      background: #d4edda;
-      border: 1px solid #c3e6cb;
-      color: #155724;
+      background: var(--figma-color-bg-success);
+      border: 1px solid var(--figma-color-border-success);
+      color: var(--figma-color-text-onsuccess);
     }
     
     .status.error {
-      background: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-    }
-    
-    .status.loading {
-      background: #d1ecf1;
-      border: 1px solid #bee5eb;
-      color: #0c5460;
+      background: var(--figma-color-bg-danger);
+      border: 1px solid var(--figma-color-border-danger);
+      color: var(--figma-color-text-ondanger);
     }
     
     .preview {
-      background: white;
-      border: 1px solid #ddd;
+      background: var(--figma-color-bg-secondary);
+      border: 1px solid var(--figma-color-border);
       border-radius: 6px;
       padding: 12px;
       margin-bottom: 16px;
@@ -90,39 +82,6 @@
       max-height: 150px;
       overflow-y: auto;
       display: none;
-    }
-    
-    .download-btn {
-      width: 100%;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 12px 16px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      margin-bottom: 8px;
-      display: none;
-    }
-    
-    .download-btn:hover {
-      background: #218838;
-    }
-    
-    .close-btn {
-      width: 100%;
-      background: transparent;
-      color: #666;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    
-    .close-btn:hover {
-      background: #f5f5f5;
     }
     
     .loading-spinner {
@@ -149,12 +108,11 @@
     .feature-list li {
       padding: 4px 0;
       font-size: 13px;
-      color: #666;
     }
     
     .feature-list li::before {
       content: "✓";
-      color: #28a745;
+      color: var(--figma-color-icon-success);
       font-weight: bold;
       margin-right: 8px;
     }
@@ -182,13 +140,6 @@
     
     <div id="preview" class="preview"></div>
     
-    <button id="downloadBtn" class="download-btn">
-      Download CSS File
-    </button>
-    
-    <button id="closeBtn" class="close-btn">
-      Close Plugin
-    </button>
   </div>
 
   <script>
@@ -196,8 +147,6 @@
     
     // DOM elements
     const exportBtn = document.getElementById('exportBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const closeBtn = document.getElementById('closeBtn');
     const status = document.getElementById('status');
     const preview = document.getElementById('preview');
     
@@ -226,7 +175,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'variables.css';
+      a.download = 'index.css';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -242,18 +191,7 @@
       // Send message to plugin code to start export
       parent.postMessage({ pluginMessage: { type: 'start-export' } }, '*');
     });
-    
-    downloadBtn.addEventListener('click', () => {
-      if (generatedCSS) {
-        downloadCSS(generatedCSS);
-        showStatus('CSS file downloaded successfully!', 'success');
-      }
-    });
-    
-    closeBtn.addEventListener('click', () => {
-      parent.postMessage({ pluginMessage: { type: 'close' } }, '*');
-    });
-    
+  
     // Listen for messages from plugin code
     window.addEventListener('message', (event) => {
       const { type, css, variableCount, collectionName, message } = event.data.pluginMessage || {};
@@ -265,7 +203,6 @@
         
         showStatus(`Successfully exported ${variableCount} variables from "${collectionName}"!`, 'success');
         showPreview(css);
-        downloadBtn.style.display = 'block';
         
         // Auto-download after 1 second
         setTimeout(() => {
